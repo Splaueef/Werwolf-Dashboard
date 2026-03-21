@@ -2,6 +2,8 @@
 
 Нативний desktop-додаток + PWA для Android.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-e8593c.svg)](LICENSE)
+
 ---
 
 ## 🐧 Linux
