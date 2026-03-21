@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Werwolf Dashboard
+Comment=Werwolf Stats Dashboard
+Exec=bash -c "cd %k/.. && ./run.sh"
+Icon=applications-internet
+Terminal=false
+Categories=Network;Utility;

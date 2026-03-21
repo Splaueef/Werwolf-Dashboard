@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Werwolf">
+<meta name="theme-color" content="#0c0c0f">
+<meta name="description" content="Werwolf Stats Dashboard">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<title>Werwolf Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0f;--s:#111115;--c1:#16161b;--c2:#1c1c23;--c3:#22222c;
+  --ln:#2a2a36;--ln2:#3a3a4a;
+  --ac:#e8593c;--ah:#c94830;--a2:#f2a623;--a3:#5dcaa5;--a4:#7b8cde;--a5:#d9527a;
+  --tx:#edeae4;--mu:#72706a;
+  --r:9px;--r2:13px;
+  --f:'Inter',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
+  --sw:220px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--f);font-size:13px;background:var(--bg);color:var(--tx);display:flex;line-height:1.5}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--ln2);border-radius:99px}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.sb{width:var(--sw);min-width:var(--sw);background:var(--s);border-right:1px solid var(--ln);display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.logo{padding:16px 16px 12px;border-bottom:1px solid var(--ln);background:#0e0b13;flex-shrink:0}
+.logo-n{font-family:var(--fm);font-size:13px;font-weight:500;color:var(--ac);letter-spacing:.1em}
+.logo-s{font-size:9px;color:var(--mu);letter-spacing:.15em;margin-top:2px}
+.nav{flex:1;overflow-y:auto;padding:6px}
+.ns{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);padding:12px 10px 3px;opacity:.7}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:var(--r);cursor:pointer;color:var(--mu);font-size:12.5px;transition:all .13s;border:none;background:none;width:100%;text-align:left}
+.ni:hover{background:var(--c1);color:var(--tx)}
+.ni.on{background:rgba(232,89,60,.13);color:var(--ac);font-weight:500}
+.ni.locked{display:none}
+.nic{font-size:13px;width:17px;text-align:center;flex-shrink:0}
+.ka{padding:10px;border-top:1px solid var(--ln);flex-shrink:0}
+.kl{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:5px}
+.kw{position:relative}
+.ki{width:100%;background:var(--c2);border:1px solid var(--ln);border-radius:var(--r);padding:7px 30px 7px 9px;color:var(--tx);font-family:var(--fm);font-size:11px;outline:none;transition:border-color .13s}
+.ki:focus{border-color:var(--ac)}
+.ke{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--mu);cursor:pointer;font-size:12px}
+.ke:hover{color:var(--tx)}
+.ks{display:flex;align-items:center;gap:5px;margin-top:5px;font-size:10px;color:var(--mu)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--mu);flex-shrink:0;transition:all .18s}
+.dot.ok{background:var(--a3);box-shadow:0 0 5px var(--a3)}
+.dot.err{background:var(--ac);box-shadow:0 0 5px var(--ac)}
+.dot.warn{background:var(--a2);box-shadow:0 0 5px var(--a2)}
+
+/* ── Main ───────────────────────────────────────────────────── */
+.main{flex:1;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.bc{padding:6px 22px 0;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mu);flex-shrink:0;min-height:24px}
+.bc-i{cursor:pointer;color:var(--mu);transition:color .12s}.bc-i:hover{color:var(--tx)}
+.bc-sep{opacity:.35}.bc-i.cur{color:var(--tx);cursor:default}
+.pg{display:none;flex:1;overflow-y:auto;padding:14px 22px 24px}
+.pg.on{display:block}
+
+/* ── Page header ─────────────────────────────────────────────── */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
+.ph h1{font-size:17px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+.phr{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:5px;background:var(--c2);border:1px solid var(--ln);border-radius:99px;padding:3px 10px 3px 7px;font-size:10px;color:var(--mu)}
+
+/* ── Inputs / Buttons ────────────────────────────────────────── */
+.row{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap}
+.inp{flex:1;min-width:120px;background:var(--c1);border:1px solid var(--ln);border-radius:var(--r);padding:8px 11px;color:var(--tx);font-family:var(--f);font-size:13px;outline:none;transition:border-color .13s}
+.inp:focus{border-color:var(--ac)}.inp::placeholder{color:var(--mu)}.inp.w160{flex:0 0 160px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-family:var(--f);font-size:12.5px;font-weight:500;border:none;cursor:pointer;transition:all .13s;white-space:nowrap}
+.bp{background:var(--ac);color:#fff}.bp:hover{background:var(--ah);transform:translateY(-1px)}
+.bs{background:var(--c2);color:var(--tx);border:1px solid var(--ln)}.bs:hover{border-color:var(--ln2)}
+.bw{background:rgba(93,202,165,.12);color:var(--a3);border:1px solid rgba(93,202,165,.2)}.bw:hover{background:rgba(93,202,165,.2)}
+.btn:active{transform:scale(.98)!important}
+
+/* ── Cards ───────────────────────────────────────────────────── */
+.card{background:var(--c1);border:1px solid var(--ln);border-radius:var(--r2);margin-bottom:9px;overflow:hidden}
+.ch{padding:9px 14px;border-bottom:1px solid var(--ln);font-size:9.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--mu);display:flex;align-items:center;justify-content:space-between}
+.cb{padding:11px 14px}
+
+/* ── Balance ─────────────────────────────────────────────────── */
+.bst{display:flex}
+.bcl{flex:1;padding:12px 15px;border-right:1px solid var(--ln)}.bcl:last-child{border-right:none}
+.bl{font-size:10px;color:var(--mu);margin-bottom:3px}
+.bv{font-size:22px;font-weight:600;letter-spacing:-.03em;line-height:1}
+
+/* ── Stat grid ───────────────────────────────────────────────── */
+.sg{display:grid;gap:7px;margin-bottom:9px}
+.c5{grid-template-columns:repeat(5,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+.c3{grid-template-columns:repeat(3,1fr)}.c2{grid-template-columns:repeat(2,1fr)}
+.sb2{background:var(--c1);border:1px solid var(--ln);border-radius:var(--r2);padding:11px 13px}
+.sl{font-size:9.5px;color:var(--mu);margin-bottom:3px}
+.sv{font-size:18px;font-weight:600;line-height:1.1;letter-spacing:-.02em}
+.ss{font-size:9.5px;color:var(--mu);margin-top:2px}
+
+/* ── Colors ──────────────────────────────────────────────────── */
+.ca{color:var(--ac)}.ca2{color:var(--a2)}.ca3{color:var(--a3)}.ca4{color:var(--a4)}.ca5{color:var(--a5)}.cm{color:var(--mu)}
+
+/* ── KV Table ────────────────────────────────────────────────── */
+.kvr{display:flex;align-items:baseline;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.kvr:last-child{border-bottom:none}
+.kvk{width:140px;flex-shrink:0;color:var(--mu);font-size:12px}
+.kvv{color:var(--tx);font-size:12px;font-weight:500;word-break:break-all}
+
+/* ── Two col ─────────────────────────────────────────────────── */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:9px}
+
+/* ── User header ─────────────────────────────────────────────── */
+.uhdr{display:flex;align-items:flex-start;gap:13px;padding:13px 14px}
+.av{width:46px;height:46px;border-radius:50%;background:rgba(232,89,60,.12);border:2px solid var(--ac);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--ac);flex-shrink:0;cursor:pointer;transition:opacity .13s}
+.av:hover{opacity:.75}
+.av.v2{border-color:var(--a2);color:var(--a2);background:rgba(242,166,35,.1)}
+.av.v3{border-color:#c084e0;color:#c084e0;background:rgba(192,132,224,.1)}
+.av.v4{border-color:gold;color:gold;background:rgba(255,215,0,.1)}
+.ui{flex:1;min-width:0}
+.un{font-size:14px;font-weight:600}
+.us{font-size:11px;color:var(--mu);margin-top:1px}
+.uid{font-size:10px;color:var(--mu);margin-top:2px;font-family:var(--fm)}
+
+/* ── Leaderboard ─────────────────────────────────────────────── */
+.lh{display:flex;padding:0 0 6px;border-bottom:1px solid var(--ln);margin-bottom:2px;font-size:9.5px;font-weight:600;color:var(--mu)}
+.ln2{width:27px;flex-shrink:0}.lt{flex:1;min-width:0}.ls{text-align:right;flex-shrink:0}
+.lr{display:flex;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.025);border-radius:3px}
+.lr:last-child{border-bottom:none}.lr:hover{background:rgba(255,255,255,.02)}
+.lr .ln2{font-size:12px;padding-left:2px}.lr .lt{font-size:12px;color:var(--tx);padding-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lr .ls{font-size:12px;font-weight:600;color:var(--ac)}
+.lsub{font-size:10px;color:var(--mu);display:block;font-weight:400}
+
+/* ── Links ───────────────────────────────────────────────────── */
+.lnk{cursor:pointer;text-decoration:none;transition:color .12s}
+.lnk:hover{text-decoration:underline}
+.lu{color:var(--a4)}.lu:hover{color:#9fb0f0}
+.lg{color:var(--a3)}.lg:hover{color:#80e0c0}
+
+/* ── TX rows ─────────────────────────────────────────────────── */
+.txr{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.txr:last-child{border-bottom:none}
+.txb{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0}
+.ti{background:#0c1e14;color:var(--a3)}.to{background:#1e0d0a;color:var(--ac)}
+.txn{flex:1;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.txd{font-size:10px;color:var(--mu);flex-shrink:0}
+.txa{font-size:12.5px;font-weight:600;flex-shrink:0}
+
+/* ── Transfer form ───────────────────────────────────────────── */
+.tfg{display:grid;grid-template-columns:1fr 1fr auto auto;gap:7px;align-items:center}
+.seg{display:flex;background:var(--c2);border:1px solid var(--ln);border-radius:var(--r);overflow:hidden}
+.sgb{flex:1;padding:7px 11px;background:none;border:none;color:var(--mu);font-family:var(--f);font-size:12px;font-weight:500;cursor:pointer;transition:all .13s}
+.sgb.on{background:var(--ac);color:#fff}
+
+/* ── Charts ──────────────────────────────────────────────────── */
+.cw{position:relative;height:190px}.cw.h140{height:140px}.cw.h160{height:160px}
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+.tabs{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:9px}
+.tab{padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;background:var(--c2);border:1px solid var(--ln);color:var(--mu);transition:all .12s;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab.on{background:rgba(232,89,60,.13);color:var(--ac);border-color:rgba(232,89,60,.3)}
+
+/* ── Tags ────────────────────────────────────────────────────── */
+.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600;margin-right:3px;vertical-align:middle}
+.tv{background:rgba(242,166,35,.15);color:var(--a2)}.tp{background:rgba(123,140,222,.14);color:var(--a4)}
+.tg{background:rgba(93,202,165,.13);color:var(--a3)}.tr{background:rgba(232,89,60,.12);color:var(--ac)}
+.tm{background:rgba(217,82,122,.12);color:var(--a5)}
+
+/* ── Loading / msgs ──────────────────────────────────────────── */
+.loading{display:flex;align-items:center;gap:8px;padding:24px 0;color:var(--mu)}
+.spin{width:15px;height:15px;border:2px solid var(--ln2);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ebox{background:#1a0b09;border:1px solid #4a1e18;border-radius:var(--r);padding:10px 13px;color:#dd7070;margin-bottom:9px}
+.sbox{background:#091a11;border:1px solid #1e4a2a;border-radius:var(--r);padding:10px 13px;color:var(--a3);margin-bottom:9px}
+.phb{display:flex;flex-direction:column;align-items:center;padding:55px 0;gap:8px;color:var(--mu)}
+.phi{font-size:36px;opacity:.28}.pht{font-size:14px}.phs{font-size:11.5px;opacity:.65}
+
+/* ── Toast ───────────────────────────────────────────────────── */
+.toast{position:fixed;bottom:16px;right:16px;background:var(--c2);border:1px solid var(--ln2);border-radius:var(--r);padding:8px 14px;font-size:12px;color:var(--tx);transform:translateY(12px);opacity:0;pointer-events:none;transition:all .25s cubic-bezier(.175,.885,.32,1.275);z-index:999}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{border-color:rgba(93,202,165,.4);color:var(--a3)}.toast.err{border-color:rgba(232,89,60,.4);color:var(--ac)}
+
+/* ── Pet rows ────────────────────────────────────────────────── */
+.prow{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.prow:last-child{border-bottom:none}
+.pico{font-size:26px;flex-shrink:0;width:40px;text-align:center}
+.pinf{flex:1}
+.pname{font-size:13px;font-weight:600;margin-bottom:2px}
+.psub{font-size:10.5px;color:var(--mu);margin-bottom:5px}
+.prog{height:3px;background:var(--c2);border-radius:99px;overflow:hidden;margin-top:2px}
+.prf{height:100%;border-radius:99px;transition:width .4s}
+
+/* ── Friend rows ─────────────────────────────────────────────── */
+.frow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.frow:last-child{border-bottom:none}
+.fav{width:33px;height:33px;border-radius:50%;background:var(--c2);border:1px solid var(--ln);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--a4);flex-shrink:0;cursor:pointer;transition:opacity .13s}
+.fav:hover{opacity:.75}
+.fi{flex:1;min-width:0}
+.fn{font-size:12.5px;font-weight:500}
+.fs{font-size:10.5px;color:var(--mu)}
+
+/* ── Group / User list rows ──────────────────────────────────── */
+.listrow{display:flex;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.025);gap:9px;cursor:pointer;transition:background .12s;border-radius:4px}
+.listrow:last-child{border-bottom:none}.listrow:hover{background:rgba(255,255,255,.02)}
+.listrow-main{flex:1;min-width:0}
+.listrow-title{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.listrow-sub{font-size:10px;color:var(--mu);margin-top:1px}
+.listrow-val{font-size:12px;font-weight:600;color:var(--ac);flex-shrink:0;min-width:46px;text-align:right}
+.listrow-vsub{font-size:10px;color:var(--mu);text-align:right}
+
+/* ── Nick big ────────────────────────────────────────────────── */
+.nbig{font-size:18px;font-weight:600;color:var(--a2);min-height:24px}
+
+/* ── Progress bar inline ─────────────────────────────────────── */
+.hpbar{height:5px;background:var(--c2);border-radius:99px;overflow:hidden;margin-top:4px}
+.hpfill{height:100%;border-radius:99px}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media(max-width:800px){
+  :root{--sw:50px}
+  .ni span:not(.nic){display:none}
+  .logo-n,.logo-s{display:none}
+  .c4,.c5{grid-template-columns:repeat(2,1fr)}
+  .two,.three{grid-template-columns:1fr}
+  .tfg{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<aside class="sb">
+  <div class="logo">
+    <div class="logo-n">WERWOLF</div>
+    <div class="logo-s">DASHBOARD</div>
+  </div>
+  <nav class="nav" id="NAV">
+    <div class="ns">Головне</div>
+    <button class="ni on"     data-page="profile">  <span class="nic">👤</span><span>Мій профіль</span></button>
+    <button class="ni"        data-page="user">     <span class="nic">🔍</span><span>Пошук юзера</span></button>
+    <button class="ni"        data-page="group">    <span class="nic">👥</span><span>Статистика чату</span></button>
+    <button class="ni locked" data-page="mygroups"> <span class="nic">📋</span><span>Всі групи</span></button>
+    <button class="ni locked" data-page="myusers">  <span class="nic">👣</span><span>Всі юзери</span></button>
+    <div class="ns">Соціальне</div>
+    <button class="ni locked" data-page="friends">  <span class="nic">🤝</span><span>Друзі</span></button>
+    <button class="ni"        data-page="relations"><span class="nic">🔗</span><span>Зв'язки</span></button>
+    <div class="ns">Акаунт</div>
+    <button class="ni"        data-page="transfer"> <span class="nic">💸</span><span>Переказ</span></button>
+    <button class="ni locked" data-page="pets">     <span class="nic">🐾</span><span>Пітомці</span></button>
+    <button class="ni"        data-page="nickname"> <span class="nic">🏷</span><span>Нікнейм</span></button>
+  </nav>
+  <div class="ka">
+    <div class="kl">API Ключ</div>
+    <div class="kw">
+      <input type="password" class="ki" id="KI" placeholder="Вставте ключ...">
+      <button class="ke" id="KE">👁</button>
+    </div>
+    <div class="ks"><span class="dot" id="D0"></span><span id="ST">Не підключено</span></div>
+  </div>
+</aside>
+
+<!-- ══════════════════ MAIN ══════════════════ -->
+<main class="main">
+  <div class="bc" id="BC"></div>
+
+  <!-- ── Profile ── -->
+  <div class="pg on" id="page-profile">
+    <div class="ph">
+      <h1>Мій профіль</h1>
+      <div class="phr">
+        <div class="pill"><span class="dot" id="D1"></span><span id="PS">Очікування...</span></div>
+        <button class="btn bs" onclick="loadProfile()">↻ Оновити</button>
+      </div>
+    </div>
+    <div id="PC"><div class="phb"><div class="phi">🔑</div><div class="pht">Введіть API ключ</div><div class="phs">Команда /api у боті</div></div></div>
+  </div>
+
+  <!-- ── User search ── -->
+  <div class="pg" id="page-user">
+    <div class="ph"><h1 id="UTitle">Пошук юзера</h1></div>
+    <div class="row">
+      <input class="inp" id="UI" placeholder="ID або @username" onkeydown="if(event.key==='Enter')searchUser()">
+      <button class="btn bp" onclick="searchUser()">Знайти</button>
+    </div>
+    <div id="UC"></div>
+  </div>
+
+  <!-- ── Group ── -->
+  <div class="pg" id="page-group">
+    <div class="ph"><h1 id="GTitle">Статистика чату</h1></div>
+    <div class="row">
+      <input class="inp" id="GI" placeholder="Chat ID" onkeydown="if(event.key==='Enter')loadGroup()">
+      <button class="btn bp" onclick="loadGroup()">Завантажити</button>
+    </div>
+    <div id="GC"></div>
+  </div>
+
+  <!-- ── My Groups ── -->
+  <div class="pg" id="page-mygroups">
+    <div class="ph"><h1>Всі групи</h1>
+      <div class="phr">
+        <input class="inp w160" id="GSearch" placeholder="Пошук..." oninput="filterGroups()" style="height:34px">
+        <button class="btn bs" onclick="loadMyGroups()">↻</button>
+      </div>
+    </div>
+    <div id="MGC"></div>
+  </div>
+
+  <!-- ── All Users ── -->
+  <div class="pg" id="page-myusers">
+    <div class="ph"><h1>Всі юзери</h1>
+      <div class="phr">
+        <input class="inp w160" id="USearch" placeholder="Пошук..." oninput="filterUsers()" style="height:34px">
+        <button class="btn bs" onclick="loadMyUsers(true)">↻</button>
+      </div>
+    </div>
+    <div id="MUC"></div>
+  </div>
+
+  <!-- ── Friends ── -->
+  <div class="pg" id="page-friends">
+    <div class="ph"><h1>Друзі</h1>
+      <div class="phr">
+        <button class="btn bw" onclick="showAddFriend()">+ Додати</button>
+        <button class="btn bs" onclick="loadFriends()">↻</button>
+      </div>
+    </div>
+    <div id="AddFriend" style="display:none" class="card" style="margin-bottom:9px">
+      <div class="ch">Надіслати запит дружби</div>
+      <div class="cb">
+        <div class="row" style="margin:0">
+          <input class="inp" id="FriendSid" placeholder="Short ID юзера">
+          <button class="btn bp" onclick="sendFriendReq()">Надіслати</button>
+          <button class="btn bs" onclick="hideAddFriend()">✕</button>
+        </div>
+        <div id="FriendRes" style="margin-top:8px"></div>
+      </div>
+    </div>
+    <div id="FRC"></div>
+  </div>
+
+  <!-- ── Relations ── -->
+  <div class="pg" id="page-relations">
+    <div class="ph"><h1>Зв'язки</h1></div>
+    <div class="row">
+      <input class="inp" id="RC" placeholder="Chat ID">
+      <input class="inp w160" id="RU" placeholder="User ID (необов'язково)">
+      <button class="btn bp" onclick="loadRelations()">Знайти</button>
+    </div>
+    <div id="RelC"></div>
+  </div>
+
+  <!-- ── Transfer ── -->
+  <div class="pg" id="page-transfer">
+    <div class="ph"><h1>Переказ валюти</h1></div>
+    <div class="card"><div class="ch">Новий переказ</div><div class="cb">
+      <div class="tfg">
+        <input class="inp" id="TS" placeholder="Short ID отримувача" style="margin:0">
+        <input class="inp" id="TA" placeholder="Сума" type="number" min="0.01" step="0.01" style="margin:0">
+        <div class="seg">
+          <button class="sgb on" id="CC" onclick="setCur('coins')">⭐ Coins</button>
+          <button class="sgb"    id="CG" onclick="setCur('gold')">🥇 Gold</button>
+        </div>
+        <button class="btn bp" onclick="doTransfer()">Переказати →</button>
+      </div>
+    </div></div>
+    <div id="TR"></div>
+    <div class="card"><div class="ch">Історія переказів</div>
+      <div class="cb" id="HB"><div class="loading"><div class="spin"></div>Завантаження...</div></div>
+    </div>
+  </div>
+
+  <!-- ── Pets ── -->
+  <div class="pg" id="page-pets">
+    <div class="ph"><h1>Пітомці</h1><button class="btn bs" onclick="loadPets()">↻</button></div>
+    <div id="PetC"></div>
+  </div>
+
+  <!-- ── Nickname ── -->
+  <div class="pg" id="page-nickname">
+    <div class="ph"><h1>Нікнейм</h1></div>
+    <div class="card"><div class="ch">Поточний нікнейм</div><div class="cb"><div class="nbig" id="NC">—</div></div></div>
+    <div class="card"><div class="ch">Змінити</div><div class="cb">
+      <div class="row" style="margin:0">
+        <input class="inp" id="NI" placeholder="Новий нікнейм (або пусто для очищення)">
+        <button class="btn bp" onclick="setNick()">Встановити</button>
+        <button class="btn bs" onclick="clearNick()">Очистити</button>
+      </div>
+    </div></div>
+    <div id="NR"></div>
+  </div>
+
+</main>
+<div class="toast" id="T"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════
+let apiKey='', currency='coins';
+let _charts={}, _allUsers=[], _allGroups=[], _navStack=[];
+const VL=['','⭐ VIP 1','🌟 VIP 2','💎 VIP 3','👑 VIP 4'];
+
+// ════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════
+(async()=>{
+  const r=await fetch('/api/key').then(r=>r.json()).catch(()=>({}));
+  if(r.key){
+    apiKey=r.key;
+    document.getElementById('KI').value=r.key;
+    setStatus('warn','Перевірка...');
+    await detectCaps();
+    loadProfile(); loadHist();
+  }
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// CAPABILITY DETECTION
+// ════════════════════════════════════════════════════════════════════
+async function detectCaps(){
+  const checks=[
+    {path:'api/friends',         page:'friends'},
+    {path:'api/pets',            page:'pets'},
+    {path:'api/public/groups',   page:'mygroups', params:{limit:1}},
+    {path:'api/public/users',    page:'myusers',  params:{limit:1}},
+  ];
+  let unlocked=0;
+  await Promise.all(checks.map(async({path,page,params})=>{
+    try{
+      const d=await api('GET',path,null,params);
+      if(!d.error){
+        document.querySelector(`.ni[data-page="${page}"]`)?.classList.remove('locked');
+        unlocked++;
+      }
+    }catch(e){}
+  }));
+  setStatus('ok', unlocked?`Підключено · ${unlocked} розблоковано`:'Підключено');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// API FETCH
+// ════════════════════════════════════════════════════════════════════
+async function api(method,path,body,params){
+  let url=`/proxy/${path}`;
+  if(params) url+='?'+new URLSearchParams(params);
+  const opts={method,headers:{'Content-Type':'application/json','X-API-Key':apiKey}};
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  const d=await r.json().catch(()=>({error:`HTTP ${r.status}`}));
+  if(!r.ok) throw new Error(d.message||d.error||`HTTP ${r.status}`);
+  return d;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// KEY MANAGEMENT
+// ════════════════════════════════════════════════════════════════════
+document.getElementById('KI').addEventListener('change',saveKey);
+document.getElementById('KI').addEventListener('keydown',e=>{if(e.key==='Enter')saveKey()});
+document.getElementById('KE').addEventListener('click',()=>{
+  const i=document.getElementById('KI');i.type=i.type==='password'?'text':'password';
+});
+async function saveKey(){
+  const k=document.getElementById('KI').value.replace(/\s/g,'');
+  apiKey=k;
+  await fetch('/api/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k})});
+  if(k){
+    setStatus('warn','Перевірка...');
+    document.querySelectorAll('.ni.locked').forEach(el=>el.classList.add('locked'));
+    _allUsers=[]; _allGroups=[];
+    await detectCaps();
+    loadProfile(); loadHist(); loadNickCurrent();
+  } else setStatus('','Не підключено');
+}
+function setStatus(t,txt){
+  document.querySelectorAll('.dot').forEach(d=>d.className='dot'+(t==='ok'?' ok':t==='err'?' err':t==='warn'?' warn':''));
+  document.getElementById('ST').textContent=txt;
+  const ps=document.getElementById('PS');if(ps)ps.textContent=txt;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// NAVIGATION + BREADCRUMB
+// ════════════════════════════════════════════════════════════════════
+document.querySelectorAll('.ni').forEach(b=>{
+  b.addEventListener('click',()=>navTo(b.dataset.page,null,null,true));
+});
+function navTo(page, label, args, reset=false){
+  document.querySelectorAll('.ni').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  const pg=document.getElementById('page-'+page);
+  if(!pg)return;
+  pg.classList.add('on');
+  const btn=document.querySelector(`.ni[data-page="${page}"]`);
+  if(btn) btn.classList.add('on');
+  if(reset) _navStack=[];
+  const lbl=label||btn?.querySelector('span:last-child')?.textContent||page;
+  _navStack.push({page,label:lbl,args});
+  renderBC();
+  // page-specific triggers
+  if(args){
+    if(page==='user')     _loadUserPage(args);
+    if(page==='group')    _loadGroupPage(args);
+  } else {
+    if(page==='nickname') loadNickCurrent();
+    if(page==='friends')  loadFriends();
+    if(page==='pets')     loadPets();
+    if(page==='mygroups') loadMyGroups();
+    if(page==='myusers')  loadMyUsers(false);
+  }
+}
+function renderBC(){
+  const bar=document.getElementById('BC');
+  if(_navStack.length<=1){bar.innerHTML='';return;}
+  bar.innerHTML=_navStack.map((e,i)=>{
+    if(i===_navStack.length-1) return `<span class="bc-i cur">${esc(e.label)}</span>`;
+    return `<span class="bc-i" onclick="bcBack(${i})">${esc(e.label)}</span><span class="bc-sep">›</span>`;
+  }).join('');
+}
+function bcBack(idx){
+  const e=_navStack[idx];
+  _navStack=_navStack.slice(0,idx);
+  navTo(e.page,e.label,e.args,false);
+}
+function goUser(id,name){ navTo('user',name||`ID ${id}`,{uid:id,name},false); }
+function goGroup(cid,title){ navTo('group',title||`Chat ${cid}`,{cid,title},false); }
+
+// ════════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════════
+const fmt=(n,d=0)=>{const v=parseFloat(n||0);return isNaN(v)?'—':d?v.toFixed(d):Math.round(v).toLocaleString('uk-UA')};
+const fmtD=ts=>ts?new Date(ts*1000).toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
+const fmtDT=ts=>ts?new Date(ts*1000).toLocaleString('uk-UA',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const spin=id=>{document.getElementById(id).innerHTML=`<div class="loading"><div class="spin"></div>Завантаження...</div>`};
+const errBox=(id,m)=>{document.getElementById(id).innerHTML=`<div class="ebox">⚠  ${esc(m)}</div>`};
+const card=(t,b,right='')=>`<div class="card"><div class="ch"><span>${t}</span>${right?`<span style="font-size:11px;color:var(--mu);font-weight:400;text-transform:none;letter-spacing:0">${right}</span>`:''}</div><div class="cb">${b}</div></div>`;
+const kv=(k,v)=>`<div class="kvr"><span class="kvk">${esc(k)}</span><span class="kvv">${v.startsWith?.('<')?v:esc(String(v))}</span></div>`;
+const sb=(l,v,c='',s='')=>`<div class="sb2"><div class="sl">${l}</div><div class="sv ${c}">${esc(String(v))}</div>${s?`<div class="ss">${s}</div>`:''}</div>`;
+const toast=(m,t='ok')=>{const el=document.getElementById('T');el.textContent=m;el.className=`toast show ${t}`;setTimeout(()=>el.className='toast',2800)};
+const lu=(id,name)=>`<span class="lnk lu" onclick="goUser(${id},'${esc(String(name||id)).replace(/'/g,"\\'")}');event.stopPropagation()">${esc(String(name||id))}</span>`;
+const lg=(cid,title)=>`<span class="lnk lg" onclick="goGroup(${cid},'${esc(String(title||cid)).replace(/'/g,"\\'")}');event.stopPropagation()">${esc(String(title||cid))}</span>`;
+
+function mkChart(id,type,labels,data,color='#e8593c',fill=true){
+  if(_charts[id]){_charts[id].destroy();delete _charts[id];}
+  const ctx=document.getElementById(id);if(!ctx)return;
+  _charts[id]=new Chart(ctx,{type,
+    data:{labels,datasets:[{data,borderColor:color,
+      backgroundColor:fill?color+'18':color+'55',
+      borderWidth:type==='bar'?0:2,pointRadius:type==='bar'?0:2,
+      pointHoverRadius:4,fill,tension:0.35,borderRadius:type==='bar'?3:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+      scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#72706a',font:{size:9},maxTicksLimit:14}},
+              y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#72706a',font:{size:9}},beginAtZero:true}}}});
+}
+
+function lbHTML(rows,c1,c2){
+  const M=['🥇','🥈','🥉'];
+  return `<div class="lh"><span class="ln2">#</span><span class="lt">${c1}</span><span class="ls">${c2}</span></div>`+
+    rows.map(([name,score,sub],i)=>
+      `<div class="lr"><span class="ln2">${M[i]||i+1}</span>
+       <span class="lt">${name}${sub?`<span class="lsub">${esc(sub)}</span>`:''}</span>
+       <span class="ls">${esc(String(score))}</span></div>`
+    ).join('');
+}
+
+function pb(v,max,color){
+  const p=max?Math.round(Math.min(Math.max(v,0),max)/max*100):0;
+  return `<div class="prog"><div class="prf" style="width:${p}%;background:${color}"></div></div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ PROFILE  /api/profile ══
+// ════════════════════════════════════════════════════════════════════
+async function loadProfile(){
+  if(!apiKey)return;
+  document.getElementById('PS').textContent='Завантаження...';
+  spin('PC');
+  try{const d=await api('GET','api/profile');renderProfile(d);setStatus('ok','Підключено');}
+  catch(e){setStatus('err',e.message);errBox('PC',e.message);}
+}
+function renderProfile(d){
+  const bal=d.balance||{},inv=d.inventory||{},lvl=d.level||{};
+  const prem=d.premium||{},stat=d.stats||{},hist=d.transfer_history||[];
+  const vipTag=prem.is_active?`<span class="tag tv">${VL[Math.min(prem.level||0,4)]||'VIP'}</span>`:'';
+  let premStr=prem.is_active?(VL[Math.min(prem.level||0,4)]||'VIP'):'Відсутній';
+  if(prem.is_active&&prem.until&&!String(prem.until).startsWith('2100')){
+    try{
+      const ts=Number(prem.until);
+      const dt=new Date(ts>1e10?ts*1000:ts);
+      if(!isNaN(dt)) premStr+=` до ${dt.toLocaleDateString('uk-UA')}`;
+    }catch(e){}
+  }
+  const relUsed=(lvl.relationship_levels_used||[]).filter(v=>v>0).length;
+  let h='';
+
+  // Balance
+  h+=`<div class="card"><div class="ch"><span>БАЛАНС</span> ${vipTag}</div>
+    <div class="bst">
+      <div class="bcl"><div class="bl">⭐  Монети</div><div class="bv ca">${fmt(bal.coins)}</div></div>
+      <div class="bcl"><div class="bl">🏦  Банк</div><div class="bv">${fmt(bal.bank,1)}</div></div>
+      <div class="bcl"><div class="bl">🥇  Золото</div><div class="bv ca2">${fmt(bal.gold,2)}</div></div>
+    </div></div>`;
+
+  // Stats
+  h+=`<div class="sg c4">
+    ${sb('📨  Повідомлень',fmt(stat.total_messages))}
+    ${sb('💬  Активних чатів',stat.active_chats||0,'ca3')}
+    ${sb('📊  Серед./день',fmt(stat.avg_per_day))}
+    ${sb('🏆  Топ чат',stat.top_chat||'—','ca2')}
+  </div>`;
+
+  // Level + Inventory
+  h+=`<div class="two">
+    ${card('РІВЕНЬ',[
+      ['Рівень',lvl.level||0],['Рівень роботи',lvl.work_level||0],
+      ['Total LP',fmt(lvl.total_lp,1)],['Activity LP',fmt(lvl.activity_lp||0,1)],
+      ['Стосунки LP',fmt(lvl.relationship_lp,1)],['Робота LP',fmt(lvl.work_lp,1)],
+      ['Стосунки',`${relUsed} / ${lvl.relationship_limit||10}`],
+    ].map(([k,v])=>kv(k,String(v))).join(''))}
+    ${card('ІНВЕНТАР',[
+      ['🛡  Захист',inv.defense||0],['📄  Документи',inv.docs||0],
+      ['🎭  Ролі',inv.active_roles_count||0],['Premium',premStr],
+    ].map(([k,v])=>kv(k,String(v))).join(''))}
+  </div>`;
+
+  // History — with clickable users
+  if(hist.length){
+    h+=card('ОСТАННІ ПЕРЕКАЗИ',hist.slice(0,10).map(tx=>{
+      const isIn=tx.direction==='in',icon=tx.currency==='gold'?'🥇':'⭐',cp=tx.counterparty||{};
+      const fee=tx.fee?` <span class="cm" style="font-size:10px">−${tx.fee}</span>`:'';
+      const src=tx.source&&tx.source!=='pay_command'?` <span class="cm" style="font-size:10px">· ${tx.source}</span>`:'';
+      const nm=cp.id?lu(cp.id,cp.name):esc(cp.name||'?');
+      return `<div class="txr">
+        <span class="txb ${isIn?'ti':'to'}">${isIn?'IN':'OUT'}</span>
+        <span class="txn">${nm}${cp.username?` <span class="cm">@${esc(cp.username)}</span>`:''}${src}</span>
+        <span class="txd">${fmtD(tx.timestamp)}</span>
+        <span class="txa ${isIn?'ca3':'ca'}">${isIn?'+':'−'}${icon} ${fmt(tx.amount,1)}${fee}</span>
+      </div>`;
+    }).join(''));
+  }
+  document.getElementById('PC').innerHTML=h;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ USER  /api/public/users/<id|@username> ══
+// ════════════════════════════════════════════════════════════════════
+async function searchUser(){
+  const v=document.getElementById('UI').value.trim();
+  if(!v)return;
+  document.getElementById('UTitle').textContent='Пошук юзера';
+  spin('UC');
+  try{const d=await api('GET',`api/public/users/${v}`);renderUser(d,v);}
+  catch(e){errBox('UC',e.message);}
+}
+async function _loadUserPage({uid,name}){
+  document.getElementById('UI').value=String(uid);
+  document.getElementById('UTitle').textContent=name||`Юзер ${uid}`;
+  spin('UC');
+  try{const d=await api('GET',`api/public/users/${uid}`);renderUser(d,uid);}
+  catch(e){errBox('UC',e.message);}
+}
+
+function renderUser(d,uid){
+  const u=d.user||{}, stat=d.stats||{}, bd=stat.message_breakdown||{};
+  const chats=d.top_chats||d.chats||[];
+  const ov=d.owner_view||{}, su=ov.storage_user||{};
+  const ca=ov.chat_activity||{}, mar=ov.marriage||{};
+  const fs=ov.friend_summary||{};
+
+  // Merge data — storage_user has the most complete info
+  const name=u.display_name||u.name||su.name||String(uid);
+  const uname=u.username||su.username||'';
+  const nick=u.nickname||su.nickname||'';
+  const vip=u.vip_level??su.vip_level??0;
+  const sid=u.short_id||su.short_id||'';
+  const stars=u.stars??su.stars??0;
+  const gold=u.gold??su.gold??0;
+  const bank=u.bank??su.bank??0;
+  const wins=u.wins??su.wins??0;
+  const losses=u.losses??su.losses??0;
+  const shield=su.shield||0, docs=su.docs||0;
+  const workLvl=su.work_level||0, workXp=su.work_xp||0;
+  const actXp=su.activity_xp_total||0;
+  const vipUntil=su.vip_until||u.vip_until||'';
+
+  let vipUntilStr='';
+  if(vipUntil&&vipUntil!=='0'){
+    try{const dt=new Date(Number(vipUntil)*1000);if(!isNaN(dt))vipUntilStr=dt.toLocaleDateString('uk-UA');}catch(e){}
+  }
+
+  const avCls=vip>=4?'av v4':vip===3?'av v3':vip===2?'av v2':'av';
+  const realId=u.id||d.resolved_user_id||uid;
+
+  let h=`<div class="card"><div class="uhdr">
+    <div class="${avCls}" onclick="goUser(${realId},'${esc(name)}')" title="ID ${realId}">${(name[0]||'?').toUpperCase()}</div>
+    <div class="ui">
+      <div class="un">${esc(name)} ${vip?`<span class="tag tv">${VL[Math.min(vip,4)]}</span>`:''}
+        ${su.is_donor?'<span class="tag tg">donor</span>':''}</div>
+      ${uname?`<div class="us">@${esc(uname)}</div>`:''}
+      ${nick?`<div class="us" style="color:var(--a2)">«${esc(nick)}»</div>`:''}
+      <div class="uid">ID: ${esc(String(realId))}${sid?` · Short: ${esc(sid)}`:''}</div>
+      <div class="uid">Перший раз: ${esc(stat.first_seen||'—')} · Останнє: ${fmtD(stat.last_message)}</div>
+    </div>
+    <div style="background:var(--c2);border-radius:var(--r);padding:8px 12px;flex-shrink:0">
+      ${[['⭐ Зірки',fmt(stars),'ca'],['🏦 Банк',fmt(bank,1),''],['🥇 Золото',fmt(gold,1),'ca2'],
+         ...(wins||losses?[[`🏆 W/L`,`${wins}/${losses}`,'ca3']]:[]),
+         ...(shield?[['🛡 Захист',shield,'']]:[]),
+         ...(docs?[['📄 Доки',docs,'']]:[]),
+      ].map(([k,v,c])=>`<div class="kvr"><span class="kvk">${k}</span><span class="kvv ${c}">${v}</span></div>`).join('')}
+    </div>
+  </div></div>`;
+
+  // Stat row
+  h+=`<div class="sg c4">
+    ${sb('📨  Всього',fmt(bd.total||stat.total_messages))}
+    ${sb('📅  Сьогодні',fmt(bd.today),'ca')}
+    ${sb('📆  Тиждень',fmt(bd.week))}
+    ${sb('🗓  Місяць',fmt(bd.month),'ca3')}
+  </div>`;
+
+  // Extra stats if storage_user available
+  if(su.id){
+    h+=`<div class="two">
+      ${card('ПРОГРЕС',[
+        ['Activity XP',fmt(actXp)],['Робота lvl',workLvl],['Робота XP',workXp],
+        ['VIP до',vipUntilStr||'—'],['Мова',su.language||'—'],
+        ...(su.last_work_ts?[['Остання робота',fmtD(su.last_work_ts)]]:[]),
+      ].map(([k,v])=>kv(k,String(v))).join(''))}
+      ${card('КОЛЕСО & КЕЙСИ',[
+        ...(su.wheel?[
+          ['Спінів сьогодні',su.wheel.spins_today||0],
+          ['Безпрограшна серія',su.wheel.loss_streak||0],
+          ['Наступний безкоштовний',fmtDT(su.wheel.free_available_at)],
+        ]:[]),
+        ...(su.cases?[
+          ['Кейси common',su.cases.common||0],
+          ['Кейси rare',su.cases.rare||0],
+          ['Кейси epic',su.cases.epic||0],
+          ['Ключі',su.case_keys||0],
+        ]:[]),
+      ].map(([k,v])=>kv(k,String(v))).join(''))}
+    </div>`;
+  }
+
+  // Marriage
+  if(mar.partner_id){
+    const hp=Math.round(mar.hp||0);
+    h+=card('ШЛЮБ',`
+      ${kv('Партнер',lu(mar.partner_id,'Partner'))}
+      ${kv('HP',`${fmt(mar.hp)} / ?`)}
+      ${kv('Дата',fmtD(mar.marriage_date))}
+      <div style="margin-top:4px"><div class="hpbar"><div class="hpfill" style="width:${Math.min(hp/100*100,100)}%;background:var(--a5)"></div></div></div>
+    `);
+  }
+
+  // Friends summary
+  const frFriends=fs.friends||[];
+  if(frFriends.length){
+    h+=card(`ДРУЗІ (${frFriends.length})`,frFriends.slice(0,6).map(id=>`<span class="tag tp" style="cursor:pointer" onclick="goUser(${id},'${id}')">#${id}</span>`).join(' '));
+  }
+
+  // Chat activity — tabs + charts
+  const cids=Object.keys(ca);
+  if(cids.length){
+    window._UCA=ca; window._UChats=chats;
+    const tabs=cids.map((cid,i)=>{
+      let t=chats.find(c=>String(c.chat_id)===cid)?.title||ca[cid].name||`chat ${cid}`;
+      if(!t||t.startsWith('Chat -'))t=`chat ${cid}`;
+      return `<button class="tab${i===0?' on':''}" onclick="switchUChart('${cid}',this)">${esc(t)}</button>`;
+    }).join('');
+    h+=card('АКТИВНІСТЬ ПО ЧАТАХ',`<div class="tabs">${tabs}</div><div class="cw h160"><canvas id="UCChart"></canvas></div>`);
+  }
+
+  // Top chats — clickable
+  if(chats.length){
+    h+=card('ТОП ЧАТИ',lbHTML(chats.slice(0,10).map(c=>{
+      let t=c.title||'';if(!t||t.startsWith('Chat -'))t=`chat ${c.chat_id}`;
+      return [lg(c.chat_id,t),fmt(c.messages||0),`з ${c.first_seen||'?'}${c.can_moderate?' · mod':''}`];
+    }),'Чат','Повідомлень'));
+  }
+
+  document.getElementById('UC').innerHTML=h;
+  if(cids.length) setTimeout(()=>switchUChart(cids[0]),50);
+}
+
+function switchUChart(cid,btn){
+  document.querySelectorAll('#UC .tab').forEach(t=>t.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  const info=(window._UCA||{})[cid];
+  if(!info?.messages)return;
+  const days=Object.keys(info.messages).sort();
+  mkChart('UCChart','line',days.map(d=>d.slice(5)),days.map(d=>info.messages[d]||0),'#7b8cde',true);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ GROUP  /api/public/groups/<id> ══
+// ════════════════════════════════════════════════════════════════════
+async function loadGroup(){
+  const v=document.getElementById('GI').value.trim();
+  if(!v)return;
+  document.getElementById('GTitle').textContent='Статистика чату';
+  spin('GC');
+  try{const d=await api('GET',`api/public/groups/${v}`);renderGroup(d);}
+  catch(e){errBox('GC',e.message);}
+}
+async function _loadGroupPage({cid,title}){
+  document.getElementById('GI').value=String(cid);
+  document.getElementById('GTitle').textContent=title||`Chat ${cid}`;
+  spin('GC');
+  try{const d=await api('GET',`api/public/groups/${cid}`);renderGroup(d);}
+  catch(e){errBox('GC',e.message);}
+}
+
+function renderGroup(d){
+  const stat=d.stats||{},summ=stat.summary||{};
+  const sC=summ.current||{},sD=summ.day||{},sM=summ.month||{},sA=summ.all||{};
+  const top=stat.top_users||[], daily=stat.daily_messages||[], hourly=stat.hourly_messages||[];
+  const set=d.settings||{}, own=d.owner||{};
+  const title=d.title||`chat ${d.chat_id}`;
+
+  const flags=[];
+  if(set.greeting_enabled)     flags.push('👋 Привітання');
+  if(set.enable_group_ai)      flags.push('🤖 AI');
+  if(set.enable_ai_moderation) flags.push('🛡 Модерація');
+  if(set.user_stats_mode==='enabled') flags.push('📊 Стат-ка');
+  if(!set.disable_rp_commands) flags.push('🎭 RP');
+
+  const ownLink=own.id?lu(own.id,own.display_name||'?'):esc(own.display_name||'—');
+  const infoBody=[
+    kv('Chat ID',String(d.chat_id)),
+    kv('Учасники',fmt(d.members)),
+    kv('Мова',d.language||'—'),
+    `<div class="kvr"><span class="kvk">Власник</span><span class="kvv">${ownLink}</span></div>`,
+    ...(own.rank?[kv('Rank власника',own.rank)]:[] ),
+    ...(d.link?[`<div class="kvr"><span class="kvk">Посилання</span><span class="kvv"><a href="${esc(d.link)}" target="_blank" class="lnk lg">${esc(d.link)}</a></span></div>`]:[]),
+  ].join('');
+
+  const flagsH=flags.length?`<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">${flags.map(f=>`<span class="tag tp">${f}</span>`).join('')}</div>`:'';
+
+  let h=card(`${esc(title)}`,[infoBody,flagsH].join(''));
+
+  h+=`<div class="sg c4">
+    ${sb('⚡  Зараз',fmt(sC.messages),'ca',`${sC.unique_users||0} юзерів`)}
+    ${sb('📨  Сьогодні',fmt(sD.messages),'ca',`${sD.unique_users||0} юзерів`)}
+    ${sb('📅  Місяць',fmt(sM.messages),'',`${sM.unique_users||0} юзерів`)}
+    ${sb('📊  Всього',fmt(sA.messages||stat.total_messages||0),'ca3',`${sA.unique_users||0} унікальних`)}
+  </div>`;
+
+  // Top users — clickable
+  if(top.length){
+    const M=['🥇','🥈','🥉'];
+    let lb=`<div class="lh"><span class="ln2">#</span><span class="lt">Юзер</span><span class="ls">Сьогодні</span></div>`;
+    top.slice(0,10).forEach((u,i)=>{
+      // top_users fields: messages, name, user_id, username
+      const nm=u.name||u.display_name||String(u.user_id||'?');
+      const userLink=u.user_id?lu(u.user_id,nm):esc(nm);
+      lb+=`<div class="lr"><span class="ln2">${M[i]||i+1}</span>
+        <span class="lt">${userLink}${u.username?`<span class="lsub">@${esc(u.username)}</span>`:''}</span>
+        <span class="ls">${fmt(u.messages||0)}</span></div>`;
+    });
+    h+=card('ТОП СЬОГОДНІ',lb);
+  }
+
+  const filt=daily.filter(x=>parseInt(x.count||0)>0);
+  if(filt.length>1) h+=card('ГРАФІК АКТИВНОСТІ','<div class="cw"><canvas id="GCDaily"></canvas></div>');
+
+  // hourly_messages: [{count, label, dt}] — label="HH:00"
+  if(hourly.length){
+    const hasData=hourly.some(x=>parseInt(x.count||0)>0);
+    h+=card('АКТИВНІСТЬ ПО ГОДИНАХ'+(hasData?'':' <span class="cm" style="font-size:10px">(сьогодні 0)</span>'),'<div class="cw h140"><canvas id="GCHourly"></canvas></div>');
+  }
+
+  // Settings details
+  const settKeys=['rules','pinned_notice','welcome_message'];
+  const settVals=settKeys.filter(k=>set[k]).map(k=>kv(k,set[k])).join('');
+  if(settVals) h+=card('ТЕКСТОВІ НАЛАШТУВАННЯ',settVals);
+
+  document.getElementById('GC').innerHTML=h;
+  if(filt.length>1) setTimeout(()=>mkChart('GCDaily','line',
+    filt.slice(-50).map(x=>x.day.slice(5)),filt.slice(-50).map(x=>parseInt(x.count||0)),'#e8593c',true),50);
+  if(hourly.length) setTimeout(()=>mkChart('GCHourly','bar',
+    hourly.map(x=>x.label||''),hourly.map(x=>parseInt(x.count||0)),'#7b8cde',false),60);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ MY GROUPS  /api/public/groups ══
+// ════════════════════════════════════════════════════════════════════
+async function loadMyGroups(){
+  spin('MGC');
+  try{
+    let all=[],offset=0;
+    while(true){
+      const d=await api('GET','api/public/groups',null,{limit:100,offset});
+      const items=d.items||[];
+      all=[...all,...items];
+      if(items.length<100||all.length>=(d.pagination?.total||0))break;
+      offset+=100;
+    }
+    _allGroups=all;
+    renderMyGroups(all);
+  }catch(e){errBox('MGC',e.message);}
+}
+function filterGroups(){
+  const q=document.getElementById('GSearch').value.toLowerCase().trim();
+  if(!q){renderMyGroups(_allGroups);return;}
+  renderMyGroups(_allGroups.filter(g=>{
+    const t=(g.title||'').toLowerCase(), l=(g.link||'').toLowerCase();
+    const o=(g.owner?.display_name||'').toLowerCase();
+    return t.includes(q)||l.includes(q)||o.includes(q)||String(g.chat_id).includes(q);
+  }), true);
+}
+function renderMyGroups(groups, filtered=false){
+  if(!groups.length){document.getElementById('MGC').innerHTML='<div class="phb"><div class="phi">👥</div><div class="pht">Груп не знайдено</div></div>';return;}
+  const sorted=[...groups].sort((a,b)=>(b.stats?.total_messages||0)-(a.stats?.total_messages||0));
+  const rows=sorted.map(g=>{
+    const t=g.title&&!g.title.startsWith('Chat -')?g.title:`chat ${g.chat_id}`;
+    const own=g.owner?.display_name?`👑 ${esc(g.owner.display_name)}`:'';
+    const sub=[g.language||'uk', `${g.members||0} уч.`, own].filter(Boolean).join(' · ');
+    return `<div class="listrow" onclick="goGroup(${g.chat_id},'${esc(t)}')">
+      <div class="listrow-main">
+        <div class="listrow-title">${esc(t)}</div>
+        <div class="listrow-sub">${sub}${g.link?` · <a href="${esc(g.link)}" target="_blank" class="lnk lg" onclick="event.stopPropagation()">посилання</a>`:''}</div>
+      </div>
+      <div>
+        <div class="listrow-val">${fmt(g.stats?.total_messages||0)}</div>
+        <div class="listrow-vsub">${g.stats?.unique_users||0} юзерів</div>
+      </div>
+    </div>`;
+  }).join('');
+  const label=filtered?`РЕЗУЛЬТАТИ (${groups.length})`:`ГРУПИ · ${groups.length} з ${_allGroups.length}`;
+  document.getElementById('MGC').innerHTML=card(label,rows);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ ALL USERS  /api/public/users ══
+// ════════════════════════════════════════════════════════════════════
+async function loadMyUsers(force=false){
+  if(_allUsers.length&&!force){renderMyUsers(_allUsers);return;}
+  spin('MUC');
+  try{
+    let all=[],offset=0,total=Infinity;
+    while(all.length<Math.min(total,3000)){
+      const d=await api('GET','api/public/users',null,{limit:100,offset});
+      const items=d.items||[];
+      all=[...all,...items];
+      total=d.pagination?.total||items.length;
+      if(items.length<100)break;
+      offset+=100;
+      // Show progress
+      document.getElementById('MUC').innerHTML=`<div class="loading"><div class="spin"></div>Завантаження ${all.length} / ${total}...</div>`;
+    }
+    _allUsers=all;
+    renderMyUsers(all);
+  }catch(e){errBox('MUC',e.message);}
+}
+function filterUsers(){
+  const q=document.getElementById('USearch').value.toLowerCase().trim();
+  if(!q){renderMyUsers(_allUsers);return;}
+  renderMyUsers(_allUsers.filter(({user:u})=>{
+    return [(u.display_name||u.name||''),(u.username||''),(u.nickname||''),String(u.id||'')]
+      .some(s=>s.toLowerCase().includes(q));
+  }),true);
+}
+function renderMyUsers(items, filtered=false){
+  if(!items.length){document.getElementById('MUC').innerHTML='<div class="phb"><div class="phi">👤</div><div class="pht">Нічого не знайдено</div></div>';return;}
+  const sorted=[...items].sort((a,b)=>(b.stats?.total_messages||0)-(a.stats?.total_messages||0));
+  const rows=sorted.slice(0,300).map(({user:u,stats:s})=>{
+    const name=u.display_name||u.name||String(u.id);
+    const sub=[u.username?`@${u.username}`:'',s?.first_seen?`з ${s.first_seen}`:'',`${s?.chats_count||0} чатів`].filter(x=>x&&x!=='0 чатів').join(' · ');
+    return `<div class="listrow" onclick="goUser(${u.id},'${esc(name)}')">
+      <div class="listrow-main">
+        <div class="listrow-title">${esc(name)} ${u.vip_level?`<span class="tag tv" style="font-size:9px">${VL[Math.min(u.vip_level,4)]}</span>`:''}</div>
+        <div class="listrow-sub">${esc(sub)}</div>
+      </div>
+      <div>
+        <div class="listrow-val">${fmt(s?.total_messages||0)}</div>
+        <div class="listrow-vsub">${fmtD(s?.last_message)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const label=filtered?`РЕЗУЛЬТАТИ (${items.length})`:`ЮЗЕРИ · ${Math.min(items.length,300)} з ${_allUsers.length}`;
+  document.getElementById('MUC').innerHTML=card(label,rows);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ FRIENDS  /api/friends  +  POST /api/friends/request ══
+// ════════════════════════════════════════════════════════════════════
+async function loadFriends(){
+  if(!apiKey)return; spin('FRC');
+  try{const d=await api('GET','api/friends');renderFriends(d);}
+  catch(e){errBox('FRC',e.message);}
+}
+function renderFriends(d){
+  const fr=d.friends||[], inc=d.incoming||[], out=d.outgoing||[];
+  const fRow=(f,badge='')=>`<div class="frow">
+    <div class="fav" onclick="goUser(${f.id},'${esc(f.name||String(f.id))}')">${(f.name||'?')[0].toUpperCase()}</div>
+    <div class="fi">
+      <div class="fn">${lu(f.id,f.name||'?')} ${badge}</div>
+      <div class="fs">${f.username?`@${esc(f.username)}`:''}${f.short_id?` · ${esc(f.short_id)}`:''}</div>
+    </div>
+  </div>`;
+  let h='';
+  if(fr.length) h+=card(`ДРУЗІ (${fr.length})`,fr.map(f=>fRow(f)).join(''));
+  if(inc.length) h+=card('ВХІДНІ ЗАПИТИ',inc.map(f=>fRow(f,'<span class="tag tg">+</span>')).join(''));
+  if(out.length) h+=card('ВИХІДНІ ЗАПИТИ',out.map(f=>fRow(f,'<span class="tag tp">→</span>')).join(''));
+  if(!h) h='<div class="phb"><div class="phi">🤝</div><div class="pht">Друзів немає</div></div>';
+  document.getElementById('FRC').innerHTML=h;
+}
+function showAddFriend(){ document.getElementById('AddFriend').style.display=''; }
+function hideAddFriend(){ document.getElementById('AddFriend').style.display='none'; document.getElementById('FriendRes').innerHTML=''; }
+async function sendFriendReq(){
+  const sid=document.getElementById('FriendSid').value.trim().toUpperCase();
+  if(!sid)return;
+  try{
+    const d=await api('POST','api/friends/request',{short_id:sid});
+    document.getElementById('FriendRes').innerHTML=`<div class="sbox">✅ ${esc(d.message||'Запит надіслано')}</div>`;
+    toast('Запит надіслано!');
+    loadFriends();
+  }catch(e){document.getElementById('FriendRes').innerHTML=`<div class="ebox">⚠ ${esc(e.message)}</div>`;}
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ RELATIONS ══
+// ════════════════════════════════════════════════════════════════════
+async function loadRelations(){
+  const cid=document.getElementById('RC').value.trim(), uid=document.getElementById('RU').value.trim();
+  if(!cid)return; spin('RelC');
+  try{
+    const path=uid?`api/public/relationships/user/${cid}/${uid}`:`api/public/relationships/chat/${cid}`;
+    const d=await api('GET',path);
+    const t=uid?"ЗВ'ЯЗКИ ЮЗЕРА":"ЗВ'ЯЗКИ ЧАТУ";
+    const entries=Array.isArray(d)?d:(d.relationships||d.items||d.leaderboard||[]);
+    // Also show marriage if present
+    const mar=d.marriage;
+    let h='';
+    if(mar?.partner_id) h+=card('ШЛЮБ',kv('Партнер',lu(mar.partner_id,'Partner'))+kv('HP',fmt(mar.hp))+kv('Дата',fmtD(mar.marriage_date)));
+    if(!entries.length){h+=card(t,'<span class="cm">Даних немає</span>');}
+    else{
+      h+=card(t,lbHTML(entries.slice(0,15).map(e=>{
+        const n1=e.user1_name||e.name||e.display_name||'?', n2=e.user2_name;
+        return [n2?`${esc(n1)} ↔ ${esc(n2)}`:esc(n1), fmt(e.score||e.messages||e.count||0)];
+      }),'Пара','Рахунок'));
+    }
+    document.getElementById('RelC').innerHTML=h;
+  }catch(e){errBox('RelC',e.message);}
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ TRANSFER  POST /api/profile/transfer ══
+// ════════════════════════════════════════════════════════════════════
+function setCur(c){
+  currency=c;
+  document.getElementById('CC').className='sgb'+(c==='coins'?' on':'');
+  document.getElementById('CG').className='sgb'+(c==='gold'?' on':'');
+}
+async function doTransfer(){
+  const sid=document.getElementById('TS').value.trim().toUpperCase();
+  const amt=parseFloat(document.getElementById('TA').value);
+  if(!sid||!amt||amt<=0){toast('Заповніть поля','err');return;}
+  document.getElementById('TR').innerHTML=`<div class="loading"><div class="spin"></div>Виконую...</div>`;
+  try{
+    const d=await api('POST','api/profile/transfer',{short_id:sid,amount:amt,currency});
+    const bal=d.balance||{},icon=currency==='gold'?'🥇':'⭐';
+    const rec=(d.recipient||{}).name||sid,fee=d.fee?` <span class="cm">(−${d.fee})</span>`:'';
+    document.getElementById('TR').innerHTML=`<div class="sbox">
+      ✅ Переказано <b>${icon} ${fmt(d.transferred||d.amount||0,1)}</b> → ${esc(rec)}${fee}<br>
+      <span style="font-size:11px;opacity:.8">Баланс: ⭐ ${fmt(bal.coins)} &nbsp;🏦 ${fmt(bal.bank,1)} &nbsp;🥇 ${fmt(bal.gold,1)}</span>
+    </div>`;
+    toast('Переказ виконано!'); loadHist();
+  }catch(e){document.getElementById('TR').innerHTML=`<div class="ebox">⚠ ${esc(e.message)}</div>`;}
+}
+async function loadHist(){
+  if(!apiKey)return;
+  try{
+    const d=await api('GET','api/profile');
+    const hist=d.transfer_history||[];
+    if(!hist.length){document.getElementById('HB').innerHTML='<span class="cm">Немає переказів</span>';return;}
+    document.getElementById('HB').innerHTML=hist.slice(0,20).map(tx=>{
+      const isIn=tx.direction==='in',icon=tx.currency==='gold'?'🥇':'⭐',cp=tx.counterparty||{};
+      const fee=tx.fee?` <span class="cm" style="font-size:10px">−${tx.fee}</span>`:'';
+      const src=tx.source&&tx.source!=='pay_command'?` <span class="cm" style="font-size:10px">· ${tx.source}</span>`:'';
+      const nm=cp.id?lu(cp.id,cp.name):esc(cp.name||'?');
+      return `<div class="txr">
+        <span class="txb ${isIn?'ti':'to'}">${isIn?'IN':'OUT'}</span>
+        <span class="txn">${nm}${cp.username?` <span class="cm">@${esc(cp.username)}</span>`:''}${src}</span>
+        <span class="txd">${fmtD(tx.timestamp)}</span>
+        <span class="txa ${isIn?'ca3':'ca'}">${isIn?'+':'−'}${icon} ${fmt(tx.amount,1)}${fee}</span>
+      </div>`;
+    }).join('');
+  }catch(e){}
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ PETS  /api/pets ══
+// ════════════════════════════════════════════════════════════════════
+async function loadPets(){
+  if(!apiKey)return; spin('PetC');
+  try{const d=await api('GET','api/pets');renderPets(d);}
+  catch(e){errBox('PetC',e.message);}
+}
+function renderPets(d){
+  const pets=d.pets||[];
+  if(!pets.length){document.getElementById('PetC').innerHTML='<div class="phb"><div class="phi">🐾</div><div class="pht">Пітомців немає</div></div>';return;}
+  const sIco={egg:'🥚',baby:'🐣',young:'🐥',adult:'🐾',legendary:'⭐'};
+  const rows=pets.map(p=>{
+    const icon=sIco[p.stage]||'🐾';
+    const owners=(p.owners_preview||[]).map(o=>lu(o.id,o.name||o.username||'?')).join(', ');
+    const sp=p.stage_progress||{};
+    const stagePct=sp.duration?Math.min(Math.round(sp.elapsed/sp.duration*100),100):0;
+    const cds=p.cooldowns||{};
+    const cdList=Object.entries(cds).filter(([,v])=>v>0).map(([k,v])=>`${k}: ${Math.ceil(v/60)}хв`).join(' · ');
+    return `<div class="prow">
+      <div class="pico">${icon}</div>
+      <div class="pinf">
+        <div class="pname">${esc(p.name||'Пітомець')}
+          <span class="tag tp">lvl ${p.level||1}</span>
+          <span class="tag ${p.status==='ok'?'tg':p.status==='coma'?'tr':'tm'}">${esc(p.status_label||p.status||'—')}</span>
+        </div>
+        <div class="psub">${esc(p.stage_label||p.stage||'—')} ${stagePct<100?`· прогрес: ${stagePct}%`:''} · Власники: ${owners}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:10px;color:var(--mu);margin-bottom:4px">
+          <div>❤️ HP: ${Math.round(p.health||0)}%${pb(p.health||0,100,'#e8593c')}</div>
+          <div>🍖 Голод: ${Math.round(p.hunger||0)}%${pb(100-(p.hunger||0),100,'#f2a623')}</div>
+          <div>😄 Настрій: ${Math.round(p.mood||0)}%${pb(p.mood||0,100,'#5dcaa5')}</div>
+          <div>🛁 Чистота: ${Math.round(p.cleanliness||0)}%${pb(p.cleanliness||0,100,'#7b8cde')}</div>
+        </div>
+        ${cdList?`<div style="font-size:10px;color:var(--a2)">⏱ ${cdList}</div>`:''}
+        ${p.income_bonus?`<div style="font-size:10px;color:var(--a3)">💰 Бонус доходу: +${Math.round(p.income_bonus*100)}%</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  // Pets metadata
+  const actions=d.actions||{}, maxPets=actions.max_pets||5;
+  document.getElementById('PetC').innerHTML=card(`ПІТОМЦІ (${pets.length}/${maxPets})`,rows);
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ══ NICKNAME  PUT/DELETE /api/profile/nickname ══
+// ════════════════════════════════════════════════════════════════════
+async function loadNickCurrent(){
+  if(!apiKey)return;
+  try{
+    let nick='—';
+    try{const r=await api('GET','api/profile/nickname');nick=r.nickname||'—';}
+    catch{try{const r=await api('GET','api/profile');nick=(r.user||{}).nickname||'—';}catch(e){}}
+    document.getElementById('NC').textContent=nick;
+  }catch(e){}
+}
+async function setNick(){
+  const n=document.getElementById('NI').value.trim();if(!n)return;
+  try{
+    const d=await api('PUT','api/profile/nickname',{nickname:n});
+    document.getElementById('NC').textContent=d.nickname||d.display_name||n;
+    document.getElementById('NR').innerHTML=`<div class="sbox">✅ Нікнейм: «${esc(d.nickname||n)}»</div>`;
+    toast('Нікнейм оновлено!');
+  }catch(e){document.getElementById('NR').innerHTML=`<div class="ebox">⚠ ${esc(e.message)}</div>`;}
+}
+async function clearNick(){
+  try{
+    const d=await api('DELETE','api/profile/nickname');
+    document.getElementById('NC').textContent='—';
+    document.getElementById('NR').innerHTML=`<div class="sbox">✅ Нікнейм очищено</div>`;
+    toast('Нікнейм очищено!');
+  }catch(e){document.getElementById('NR').innerHTML=`<div class="ebox">⚠ ${esc(e.message)}</div>`;}
+}
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(r=>console.log('SW registered'))
+      .catch(e=>console.log('SW error',e));
+  });
+}
+// PWA install prompt
+let _installPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();_installPrompt=e;
+  document.getElementById('InstallBtn')?.style.setProperty('display','flex');
+});
+function installPWA(){
+  if(_installPrompt){_installPrompt.prompt();_installPrompt=null;}
+}
+</script>
+</body>
+</html>

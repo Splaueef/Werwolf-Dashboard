@@ -1,0 +1,49 @@
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+*.spec
+
+# ── Virtual environments ──────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ── PyInstaller ───────────────────────────────────────────────────
+*.manifest
+version_info.txt
+
+# ── Sensitive / personal data ─────────────────────────────────────
+.werwolf_key
+*.key
+*.secret
+.env
+.env.*
+
+# ── OS ────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*~
+*.swp
+*.swo
+
+# ── IDE ───────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# ── Qt WebEngine cache ────────────────────────────────────────────
+QtWebEngine/
