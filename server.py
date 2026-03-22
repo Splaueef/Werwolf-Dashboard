@@ -37,12 +37,20 @@ if SECRET_KEY == secrets.token_hex(32):
 # ── App ─────────────────────────────────────────────────────────────
 app = Flask(__name__, static_folder=str(STATIC), static_url_path="/static")
 app.secret_key = SECRET_KEY
+# Detect if running behind HTTPS proxy
+_https = os.environ.get("HTTPS", "0") == "1"
+
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.environ.get("HTTPS", "0") == "1",
+    SESSION_COOKIE_SECURE=_https,   # True тільки якщо HTTPS=1
+    SESSION_COOKIE_NAME="ww_session",
     PERMANENT_SESSION_LIFETIME=SESSION_LIFETIME,
 )
+
+# Trust proxy headers (X-Forwarded-For, X-Forwarded-Proto)
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # ── Key helpers ─────────────────────────────────────────────────────
 def clean_key(k: str) -> str:
@@ -143,6 +151,12 @@ def proxy_route(path):
     params = request.args.to_dict() if request.args else None
     data, status = proxy(request.method, path, key, body, params)
     return jsonify(data), status
+
+# ── Favicon ──────────────────────────────────────────────────────
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(STATIC, "favicon.ico",
+                               mimetype="image/vnd.microsoft.icon")
 
 # ── Health check ─────────────────────────────────────────────────
 @app.route("/health")

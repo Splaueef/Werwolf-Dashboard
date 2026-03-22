@@ -467,7 +467,7 @@ const VL=['','⭐ VIP 1','🌟 VIP 2','💎 VIP 3','👑 VIP 4'];
 const IS_WEB = true; // running on server — sessions handle auth
 
 (async()=>{
-  const r = await fetch('/api/key').then(r=>r.json()).catch(()=>({}));
+  const r = await fetch('/api/key',{credentials:'same-origin'}).then(r=>r.json()).catch(()=>({}));
   if(r.logged_in && r.key){
     apiKey = r.key;
     showApp();
@@ -509,6 +509,7 @@ async function doLogin(){
   try{
     const r=await fetch('/api/key',{
       method:'POST',
+      credentials:'same-origin',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({key:k})
     });
@@ -531,7 +532,7 @@ async function doLogin(){
 }
 
 async function doLogout(){
-  await fetch('/api/logout',{method:'POST'});
+  await fetch('/api/logout',{method:'POST',credentials:'same-origin'});
   apiKey='';
   // Reset all pages
   document.getElementById('PC').innerHTML='<div class="phb"><div class="phi">🔑</div><div class="pht">Введіть API ключ</div><div class="phs">Команда /api у боті</div></div>';
@@ -573,7 +574,7 @@ async function detectCaps(){
 async function api(method,path,body,params){
   let url=`/proxy/${path}`;
   if(params) url+='?'+new URLSearchParams(params);
-  const opts={method,headers:{'Content-Type':'application/json','X-API-Key':apiKey}};
+  const opts={method,credentials:'same-origin',headers:{'Content-Type':'application/json','X-API-Key':apiKey}};
   if(body) opts.body=JSON.stringify(body);
   const r=await fetch(url,opts);
   const d=await r.json().catch(()=>({error:`HTTP ${r.status}`}));

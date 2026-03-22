@@ -2,29 +2,16 @@ services:
   werwolf:
     build: .
     restart: unless-stopped
+    # Слухає тільки на localhost — Nginx на хості проксіює сюди
     ports:
-      - "7433:7433"
+      - "127.0.0.1:7433:7433"
     environment:
-      # ОБОВ'ЯЗКОВО змінити на випадковий рядок!
-      # Згенерувати: python3 -c "import secrets; print(secrets.token_hex(32))"
       SECRET_KEY: "CHANGE_ME_TO_RANDOM_SECRET_KEY"
-      HTTPS: "1"       # встанови "1" якщо за Nginx з SSL
+      HTTPS: "1"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7433/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Nginx з SSL (Let's Encrypt через certbot)
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot:ro
-    depends_on:
-      - werwolf
+# Nginx не запускаємо — на VPS вже є свій
