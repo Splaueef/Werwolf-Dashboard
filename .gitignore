@@ -47,3 +47,9 @@ $RECYCLE.BIN/
 
 # ── Qt WebEngine cache ────────────────────────────────────────────
 QtWebEngine/
+
+# ── Server deployment ─────────────────────────────────────────────
+*.log
+*.pid
+.env
+gunicorn.pid

@@ -253,12 +253,18 @@ body{font-family:var(--f);font-size:13px;background:var(--bg);color:var(--tx);di
     <button class="ni"        data-page="nickname"> <span class="nic">🏷</span><span>Нікнейм</span></button>
   </nav>
   <div class="ka">
-    <div class="kl">API Ключ</div>
-    <div class="kw">
-      <input type="password" class="ki" id="KI" placeholder="Вставте ключ...">
-      <button class="ke" id="KE">👁</button>
+    <div id="KA-login">
+      <div class="kl">API Ключ</div>
+      <div class="kw">
+        <input type="password" class="ki" id="KI" placeholder="Вставте ключ...">
+        <button class="ke" id="KE">👁</button>
+      </div>
+      <div class="ks"><span class="dot" id="D0"></span><span id="ST">Не підключено</span></div>
     </div>
-    <div class="ks"><span class="dot" id="D0"></span><span id="ST">Не підключено</span></div>
+    <div id="KA-logged" style="display:none">
+      <div class="ks" style="margin-bottom:7px"><span class="dot ok" id="D0b"></span><span id="ST2">Підключено</span></div>
+      <button onclick="doLogout()" style="width:100%;padding:7px;border-radius:9px;background:rgba(232,89,60,.12);border:1px solid rgba(232,89,60,.25);color:#e8593c;font-size:12px;cursor:pointer;transition:all .13s" onmouseover="this.style.background='rgba(232,89,60,.2)'" onmouseout="this.style.background='rgba(232,89,60,.12)'">Вийти</button>
+    </div>
   </div>
 </aside>
 
@@ -396,6 +402,57 @@ body{font-family:var(--f);font-size:13px;background:var(--bg);color:var(--tx);di
 </main>
 <div class="toast" id="T"></div>
 
+<div id="LoginOverlay" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:#0c0c0f;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+">
+  <div style="text-align:center;margin-bottom:32px">
+    <div style="font-size:48px;margin-bottom:12px">🐺</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:#e8593c;letter-spacing:.1em">WERWOLF</div>
+    <div style="font-size:11px;color:#72706a;letter-spacing:.15em;margin-top:3px">DASHBOARD</div>
+  </div>
+  <div style="width:100%;max-width:360px;padding:0 20px">
+    <div style="background:#16161b;border:1px solid #2a2a36;border-radius:14px;padding:28px">
+      <div style="font-size:13px;color:#72706a;margin-bottom:16px;text-align:center">
+        Введіть API ключ для входу<br>
+        <span style="font-size:11px;color:#48464260">Отримати: /api у Werwolf боті</span>
+      </div>
+      <div style="position:relative;margin-bottom:12px">
+        <input type="password" id="LoginKey"
+          placeholder="API ключ..."
+          onkeydown="if(event.key==='Enter')doLogin()"
+          style="
+            width:100%;background:#1c1c23;border:1px solid #2a2a36;
+            border-radius:9px;padding:11px 40px 11px 13px;
+            color:#edeae4;font-family:'JetBrains Mono',monospace;font-size:13px;
+            outline:none;transition:border-color .13s;box-sizing:border-box;
+          "
+          onfocus="this.style.borderColor='#e8593c'"
+          onblur="this.style.borderColor='#2a2a36'"
+        >
+        <button onclick="toggleLoginEye()" style="
+          position:absolute;right:10px;top:50%;transform:translateY(-50%);
+          background:none;border:none;color:#72706a;cursor:pointer;font-size:14px;
+        ">👁</button>
+      </div>
+      <div id="LoginErr" style="color:#e8593c;font-size:12px;margin-bottom:10px;min-height:16px;text-align:center"></div>
+      <button onclick="doLogin()" id="LoginBtn" style="
+        width:100%;padding:11px;border-radius:9px;
+        background:#e8593c;border:none;color:#fff;
+        font-size:13px;font-weight:500;cursor:pointer;
+        transition:all .13s;
+      "
+      onmouseover="this.style.background='#c94830'"
+      onmouseout="this.style.background='#e8593c'"
+      >Увійти</button>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:11px;color:#48464280">
+      Werwolf Dashboard — ключ зберігається тільки в сесії браузера
+    </div>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════════════════════════
 // STATE
@@ -405,18 +462,87 @@ let _charts={}, _allUsers=[], _allGroups=[], _navStack=[];
 const VL=['','⭐ VIP 1','🌟 VIP 2','💎 VIP 3','👑 VIP 4'];
 
 // ════════════════════════════════════════════════════════════════════
-// INIT
+// INIT — detect web mode vs desktop mode
 // ════════════════════════════════════════════════════════════════════
+const IS_WEB = true; // running on server — sessions handle auth
+
 (async()=>{
-  const r=await fetch('/api/key').then(r=>r.json()).catch(()=>({}));
-  if(r.key){
-    apiKey=r.key;
-    document.getElementById('KI').value=r.key;
+  const r = await fetch('/api/key').then(r=>r.json()).catch(()=>({}));
+  if(r.logged_in && r.key){
+    apiKey = r.key;
+    showApp();
     setStatus('warn','Перевірка...');
     await detectCaps();
     loadProfile(); loadHist();
+  } else {
+    showLogin();
   }
 })();
+
+function showLogin(){
+  document.getElementById('LoginOverlay').style.display='flex';
+  document.getElementById('KA-login').style.display='block';
+  document.getElementById('KA-logged').style.display='none';
+  setTimeout(()=>document.getElementById('LoginKey')?.focus(), 100);
+}
+
+function showApp(){
+  document.getElementById('LoginOverlay').style.display='none';
+  document.getElementById('KA-login').style.display='none';
+  document.getElementById('KA-logged').style.display='block';
+  document.getElementById('ST2').textContent = 'Підключено';
+}
+
+function toggleLoginEye(){
+  const i=document.getElementById('LoginKey');
+  i.type=i.type==='password'?'text':'password';
+}
+
+async function doLogin(){
+  const k=document.getElementById('LoginKey').value.trim().replace(/\s/g,'');
+  const btn=document.getElementById('LoginBtn');
+  const err=document.getElementById('LoginErr');
+  if(!k){err.textContent='Введіть ключ';return;}
+
+  btn.textContent='Перевірка...'; btn.disabled=true; err.textContent='';
+
+  try{
+    const r=await fetch('/api/key',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({key:k})
+    });
+    const d=await r.json();
+    if(!r.ok || d.error){
+      err.textContent = d.error || 'Помилка авторизації';
+      btn.textContent='Увійти'; btn.disabled=false;
+      return;
+    }
+    apiKey=k;
+    btn.textContent='Увійти'; btn.disabled=false;
+    showApp();
+    setStatus('warn','Перевірка...');
+    await detectCaps();
+    loadProfile(); loadHist(); loadNickCurrent();
+  }catch(e){
+    err.textContent='Помилка з'єднання';
+    btn.textContent='Увійти'; btn.disabled=false;
+  }
+}
+
+async function doLogout(){
+  await fetch('/api/logout',{method:'POST'});
+  apiKey='';
+  // Reset all pages
+  document.getElementById('PC').innerHTML='<div class="phb"><div class="phi">🔑</div><div class="pht">Введіть API ключ</div><div class="phs">Команда /api у боті</div></div>';
+  document.getElementById('HB').innerHTML='<div class="loading"><div class="spin"></div>Завантаження...</div>';
+  _allUsers=[]; _allGroups=[];
+  // Hide optional tabs
+  document.querySelectorAll('.ni.locked').forEach(el=>el.classList.add('locked'));
+  showLogin();
+  setStatus('','Не підключено');
+  document.getElementById('LoginKey').value='';
+}
 
 // ════════════════════════════════════════════════════════════════════
 // CAPABILITY DETECTION
@@ -464,16 +590,8 @@ document.getElementById('KE').addEventListener('click',()=>{
   const i=document.getElementById('KI');i.type=i.type==='password'?'text':'password';
 });
 async function saveKey(){
-  const k=document.getElementById('KI').value.replace(/\s/g,'');
-  apiKey=k;
-  await fetch('/api/key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:k})});
-  if(k){
-    setStatus('warn','Перевірка...');
-    document.querySelectorAll('.ni.locked').forEach(el=>el.classList.add('locked'));
-    _allUsers=[]; _allGroups=[];
-    await detectCaps();
-    loadProfile(); loadHist(); loadNickCurrent();
-  } else setStatus('','Не підключено');
+  // In web mode — use doLogin() instead
+  await doLogin();
 }
 function setStatus(t,txt){
   document.querySelectorAll('.dot').forEach(d=>d.className='dot'+(t==='ok'?' ok':t==='err'?' err':t==='warn'?' warn':''));
