@@ -512,18 +512,38 @@ def main():
         os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS",
             "--disable-gpu-sandbox --no-sandbox")
     elif _platform == "Linux":
-        # Linux: prefer xcb over wayland for WebEngine compat
-        if "WAYLAND_DISPLAY" in os.environ and "QT_QPA_PLATFORM" not in os.environ:
-            os.environ["QT_QPA_PLATFORM"] = "xcb"
-        os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS",
-            "--disable-gpu-sandbox --no-sandbox --disable-software-rasterizer")
+        # Linux: force xcb, disable GPU (fixes GLX crash on most systems)
+        os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+        os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
+            "--disable-gpu "
+            "--disable-gpu-sandbox "
+            "--no-sandbox "
+            "--disable-software-rasterizer "
+            "--ignore-gpu-blacklist "
+            "--disable-gpu-compositing"
+        )
+        os.environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
+        os.environ["QT_XCB_GL_INTEGRATION"] = "none"
     elif _platform == "Darwin":
         # macOS
         os.environ.setdefault("QTWEBENGINE_CHROMIUM_FLAGS", "--no-sandbox")
 
+    # Force software rendering on Linux to avoid GLX crashes
+    if platform.system() == "Linux":
+        from PyQt6.QtWebEngineCore import QWebEngineSettings
+        from PyQt6.QtGui import QSurfaceFormat
+        fmt = QSurfaceFormat()
+        fmt.setRenderableType(QSurfaceFormat.RenderableType.OpenGLES)
+        QSurfaceFormat.setDefaultFormat(fmt)
+
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
+
+    # Additional software rendering flags via Qt
+    if platform.system() == "Linux":
+        from PyQt6.QtWebEngineCore import QWebEngineProfile
+        os.environ["QT_QUICK_BACKEND"] = "software"
 
     # App-wide stylesheet
     app.setStyleSheet(f"""
