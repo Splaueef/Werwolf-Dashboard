@@ -1,10 +1,23 @@
-# Werwolf Dashboard
+# 🐺 Werwolf Dashboard
 
-Нативний desktop-додаток + PWA для Android.
+Кросплатформений desktop-додаток + PWA для Android
+для роботи з Werwolf API.
+
+---
+
+## ⬇️ Завантаження
+
+Можна одразу скачати готову збірку:
+
+🔗 [https://github.com/Splaueef/Werwolf-Dashboard/releases/tag/v1.0.0](https://github.com/Splaueef/Werwolf-Dashboard/releases/tag/v1.0.0)
+
+Або зібрати самостійно (див. нижче 👇)
 
 ---
 
 ## 🐧 Linux
+
+### ▶️ Запуск з коду
 
 ```bash
 python3 -m venv venv
@@ -13,7 +26,8 @@ pip install -r requirements.txt
 python werwolf.py
 ```
 
-**Компіляція в бінарник:**
+### ⚙️ Збірка в бінарник
+
 ```bash
 python build.py linux
 ./dist/werwolf
@@ -23,6 +37,8 @@ python build.py linux
 
 ## 🪟 Windows
 
+### ▶️ Запуск з коду
+
 ```bat
 python -m venv venv
 venv\Scripts\activate
@@ -30,51 +46,65 @@ pip install -r requirements.txt
 python werwolf.py
 ```
 
-**Компіляція в .exe:**
+### ⚙️ Збірка в `.exe`
+
 ```bat
 python build.py windows
 dist\werwolf.exe
 ```
 
-> Потребує Visual C++ Redistributable
+> ⚠️ Потрібен встановлений Visual C++ Redistributable
 
 ---
 
-## 📱 Android (PWA)
+## 📱 Android (PWA режим)
+
+Можна використовувати як мобільний додаток через браузер.
+
+### 🚀 Інструкція:
 
 1. Запусти сервер на ПК:
+
    ```bash
    python werwolf.py
    ```
 
-2. Знайди IP свого ПК:
+2. Дізнайся IP адрес ПК:
+
    ```bash
-   ip addr | grep 192
-   # або: hostname -I
+   hostname -I
    ```
 
-3. Відкрий у Chrome на Android:
+3. Відкрий у Google Chrome на Android:
+
    ```
    http://192.168.x.x:7433
    ```
 
-4. Chrome → **⋮ → Додати на головний екран**
+4. Натисни:
 
-Після цього Werwolf відкривається як окремий додаток (без адресного рядка, як нативний).
+   ```
+   ⋮ → Додати на головний екран
+   ```
+
+✅ Після цього додаток працює як нативний (без адресного рядка)
 
 ---
 
-## Структура
+## 📂 Структура проєкту
 
 ```
 werwolf/
-├── werwolf.py          ← Qt вікно + Flask (Linux/Windows/Mac)
+├── werwolf.py          # Qt GUI + Flask сервер
 ├── requirements.txt
-├── build.py            ← python build.py [linux|windows|all]
-├── run.sh              ← розумний запускач для Linux
+├── build.py            # python build.py [linux|windows|all]
+├── run.sh              # запуск для Linux
 └── static/
-    ├── index.html      ← веб-інтерфейс
-    ├── manifest.json   ← PWA маніфест (Android)
-    ├── sw.js           ← Service Worker (офлайн кеш)
-    └── icon-192.png    ← іконка додатку
+    ├── index.html      # веб-інтерфейс
+    ├── manifest.json   # PWA маніфест
+    ├── sw.js           # Service Worker (офлайн)
+    └── icon-192.png    # іконка
 ```
+
+
+
