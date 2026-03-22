@@ -9,7 +9,7 @@
 
 Можна одразу скачати готову збірку:
 
-🔗 [https://github.com/Splaueef/Werwolf-Dashboard/releases/tag/v1.0.0](https://github.com/Splaueef/Werwolf-Dashboard/releases/)
+🔗 [https://github.com/Splaueef/Werwolf-Dashboard/releases](https://github.com/Splaueef/Werwolf-Dashboard/releases/)
 
 Або зібрати самостійно (див. нижче 👇)
 
